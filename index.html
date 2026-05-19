@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EPS — Évaluation Demi-Fond</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e63946;
+    --green: #2dc653;
+    --blue: #1d3557;
+    --light-blue: #457b9d;
+    --accent: #f4a261;
+    --bg: #f1faee;
+    --white: #ffffff;
+    --gray: #a8b2ba;
+    --dark: #1d3557;
+    --text: #2b2d42;
+    --shadow: 0 4px 20px rgba(29,53,87,0.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+  h1, h2, h3, .label-big {
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  /* === HEADER === */
+  .app-header {
+    background: var(--blue);
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .app-header h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; }
+  .app-header .subtitle { font-size: 0.8rem; color: #a8dadc; font-weight: 500; margin-top: 1px; }
+
+  /* === GLOBAL TIMER === */
+  #global-timer-display {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent);
+    text-align: center;
+    line-height: 1;
+  }
+  #global-timer-display.urgent { color: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* === EVALUATION BOX === */
+  .eval-box {
+    background: linear-gradient(135deg, #457b9d 0%, #1d3557 100%);
+    color: white;
+    margin: 12px 14px 0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    box-shadow: var(--shadow);
+  }
+  .eval-box strong { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; letter-spacing: 0.5px; }
+
+  /* === MAIN LAYOUT === */
+  .main-wrap {
+    padding: 10px 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* === CARD === */
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--blue);
+    border-bottom: 2px solid var(--bg);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* === FORM GRID === */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--light-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-group input, .form-group select {
+    border: 1.5px solid #d0dce8;
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--light-blue);
+    background: white;
+  }
+
+  /* === BUTTONS === */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-transform: uppercase;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: var(--light-blue); }
+  .btn-start { background: var(--green); color: white; font-size: 1.1rem; padding: 12px 24px; }
+  .btn-start:hover { background: #22a845; }
+  .btn-finish { background: var(--accent); color: white; }
+  .btn-red { background: var(--red); color: white; }
+  .btn-gray { background: #cfd8dc; color: var(--dark); }
+  .btn-sm { padding: 7px 12px; font-size: 0.85rem; }
+  .btn-lap { background: var(--green); color: white; font-size: 1.3rem; padding: 10px 16px; min-width: 52px; }
+  .btn-lap:disabled { background: #b0bec5; cursor: not-allowed; }
+  .btn-oups { background: #ff8a65; color: white; font-size: 0.85rem; padding: 7px 10px; }
+  .btn-oups:disabled { background: #b0bec5; cursor: not-allowed; }
+  .btn-run { background: var(--light-blue); color: white; }
+  .btn-run:disabled { background: #b0bec5; cursor: not-allowed; }
+  .btn-save { background: var(--blue); color: white; font-size: 1.1rem; padding: 14px 28px; width: 100%; }
+
+  /* === COURSES SECTION === */
+  .courses-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .nb-courses-wrap { display: flex; align-items: center; gap: 8px; }
+  .nb-courses-wrap label { font-size: 0.8rem; font-weight: 600; color: var(--light-blue); text-transform: uppercase; }
+  .nb-courses-wrap select { width: auto; border: 1.5px solid #d0dce8; border-radius: 7px; padding: 6px 10px; font-family: 'Barlow', sans-serif; background: var(--bg); }
+
+  /* === COURSE CARD === */
+  .course-card {
+    background: var(--bg);
+    border: 1.5px solid #d0dce8;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: border-color 0.3s;
+  }
+  .course-card.active { border-color: var(--green); background: #f0fff4; }
+  .course-card.rest { border-color: var(--red); background: #fff5f5; }
+  .course-card.done { border-color: #b0bec5; background: #f5f5f5; opacity: 0.85; }
+  .course-card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--blue);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .course-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .course-grid .form-group label { font-size: 0.68rem; }
+  .course-grid input { font-size: 0.88rem; padding: 6px 8px; }
+
+  .course-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .lap-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border: 1.5px solid #d0dce8;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--blue);
+  }
+  .lap-display span { font-size: 0.7rem; font-weight: 600; color: var(--gray); text-transform: uppercase; }
+  .timer-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 7px;
+    background: var(--blue);
+    color: white;
+    min-width: 70px;
+    text-align: center;
+  }
+  .timer-badge.rest-timer { background: var(--red); }
+  .timer-badge.green-timer { background: var(--green); }
+
+  /* === RESULTS === */
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--bg);
+    font-size: 0.88rem;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { color: var(--light-blue); font-weight: 600; }
+  .result-value { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--dark); }
+
+  /* === NOTE DISPLAY === */
+  .note-display {
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--blue), var(--light-blue));
+    border-radius: 12px;
+    color: white;
+    margin-top: 10px;
+  }
+  .note-big {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .note-sub { font-size: 0.85rem; color: #a8dadc; margin-top: 4px; }
+
+  /* === ALERT === */
+  .alert {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert-warn { background: #fff3cd; border: 1.5px solid #ffc107; color: #856404; }
+  .alert-info { background: #cce5ff; border: 1.5px solid #004085; color: #004085; }
+  .alert-success { background: #d4edda; border: 1.5px solid #28a745; color: #155724; }
+
+  /* === STATUS BADGES === */
+  .badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .badge-green { background: #d4edda; color: #155724; }
+  .badge-red { background: #f8d7da; color: #721c24; }
+  .badge-blue { background: #cce5ff; color: #004085; }
+  .badge-gray { background: #e2e3e5; color: #383d41; }
+
+  /* === HIDDEN === */
+  .hidden { display: none !important; }
+  #setup-phase { }
+  #eval-phase { display: none; }
+  #results-section { display: none; }
+
+  .section-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .vma-result-inline {
+    font-size: 0.8rem;
+    color: var(--light-blue);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .vma-result-inline strong { color: var(--blue); }
+  .full-width { width: 100%; }
+
+  /* Landscape optimization */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .app-header { padding: 8px 16px; }
+    .app-header h1 { font-size: 1.3rem; }
+    .main-wrap { padding: 8px 12px 16px; gap: 10px; }
+    .card { padding: 10px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div>
+    <h1>🏃 EPS — Demi-Fond</h1>
+    <div class="subtitle">Évaluation &amp; Projet d'entraînement personnel</div>
+  </div>
+  <div id="global-timer-display">30:00</div>
+</div>
+
+<!-- EVAL CONDITIONS BOX -->
+<div class="eval-box">
+  <strong>📋 Conditions de l'évaluation</strong><br>
+  Durée totale : <strong>30 minutes</strong> — incluant l'échauffement, les <strong>12 minutes de course</strong> (courses cumulées), et les temps de repos entre les courses.
+</div>
+
+<!-- ========================= SETUP PHASE ========================= -->
+<div id="setup-phase" class="main-wrap">
+
+  <!-- Identité -->
+  <div class="card">
+    <div class="card-title">👤 Identité de l'élève</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Prénom</label><input id="prenom" type="text" placeholder="Prénom" autocomplete="given-name"></div>
+      <div class="form-group"><label>Nom</label><input id="nom" type="text" placeholder="Nom" autocomplete="family-name"></div>
+      <div class="form-group">
+        <label>Classe</label>
+        <select id="classe">
+          <option value="">-- Choisir --</option>
+          <option>3A</option><option>3B</option><option>3C</option><option>3D</option><option>3E</option>
+        </select>
+      </div>
+      <div class="form-group"><label>VMA (km/h)</label><input id="vma" type="number" placeholder="ex: 14" min="5" max="25" step="0.5"></div>
+      <div class="form-group"><label>Prénom observateur</label><input id="obs-prenom" type="text" placeholder="Prénom"></div>
+      <div class="form-group"><label>Nom observateur</label><input id="obs-nom" type="text" placeholder="Nom"></div>
+    </div>
+  </div>
+
+  <!-- Courses -->
+  <div class="card">
+    <div class="card-title">🗓️ Projet de séance</div>
+    <div class="courses-header">
+      <div class="nb-courses-wrap">
+        <label>Nombre de courses :</label>
+        <select id="nb-courses" onchange="generateCourseSetup()">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+      <div class="alert alert-warn" id="alert-time" style="flex:1;margin:0;">
+        ⚠️ Tu n'as pas pris assez de récupération entre tes courses, ou tes durées de courses sont insuffisantes.
+      </div>
+    </div>
+    <div id="course-setup-list" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- Start -->
+  <div class="section-actions">
+    <button class="btn btn-start" onclick="startEvaluation()">▶ Commencer l'évaluation</button>
+  </div>
+
+</div>
+
+<!-- ========================= EVAL PHASE ========================= -->
+<div id="eval-phase" class="main-wrap">
+
+  <div class="section-actions" style="justify-content:flex-end;">
+    <button class="btn btn-finish" onclick="finishEvaluation()">🏁 J'ai fini l'évaluation</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏃 Courses en cours</div>
+    <div id="course-run-list"></div>
+  </div>
+
+</div>
+
+<!-- ========================= RESULTS ========================= -->
+<div id="results-section" class="main-wrap">
+  <div class="card">
+    <div class="card-title">📊 Résultats de l'évaluation</div>
+    <div id="results-identity" style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;color:var(--blue);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--bg);"></div>
+    <div id="results-content"></div>
+    <div class="note-display" id="note-display" style="display:none;"></div>
+  </div>
+  <button class="btn btn-save" onclick="saveCSV()">💾 Enregistrer les données (CSV)</button>
+</div>
+
+<script>
+// ===== STATE =====
+let state = {
+  prenom:'', nom:'', classe:'', vma:0,
+  obsPrenom:'', obsNom:'',
+  nbCourses: 3,
+  courseSetup: [], // [{duree, repos, pct, dist}]
+  globalTimer: null,
+  globalRemaining: 1800,
+  globalStarted: false,
+  courses: [], // runtime objects
+  currentCourse: -1,
+};
+
+// Grille de notation
+const GRILLE = [
+  { noteVMA: 1,   noteEcart: 1,   minPct: 0,  maxPct: 80, minEcart: 10, maxEcart: 999 },
+  { noteVMA: 2.5, noteEcart: 2.5, minPct: 81, maxPct: 85, minEcart: 8,  maxEcart: 9.9 },
+  { noteVMA: 4,   noteEcart: 4,   minPct: 86, maxPct: 89, minEcart: 6,  maxEcart: 7.9 },
+  { noteVMA: 5,   noteEcart: 5,   minPct: 90, maxPct: 999, minEcart: 0, maxEcart: 4.9 },
+];
+
+function getNoteVMA(pct) {
+  for (let g of [...GRILLE].reverse()) {
+    if (pct >= g.minPct) return g.noteVMA;
+  }
+  return 1;
+}
+function getNoteEcart(ecart) {
+  // ecart = valeur absolue en %
+  if (ecart >= 10) return 1;
+  if (ecart >= 8)  return 2.5;
+  if (ecart >= 6)  return 4;
+  return 5;
+}
+
+// ===== SETUP FORM =====
+function generateCourseSetup() {
+  const n = parseInt(document.getElementById('nb-courses').value);
+  state.nbCourses = n;
+  const container = document.getElementById('course-setup-list');
+  container.innerHTML = '';
+
+  for (let i = 0; i < n; i++) {
+    const isFirst = i === 0;
+    const div = document.createElement('div');
+    div.className = 'course-card';
+    div.style.marginBottom = '10px';
+    div.innerHTML = `
+      <div class="course-card-title">Course ${i+1} ${isFirst ? '<span class="badge badge-blue">3 min obligatoires</span>' : ''}</div>
+      <div class="course-grid">
+        <div class="form-group">
+          <label>Durée (min)</label>
+          <input type="number" id="dur-${i}" value="${isFirst ? 3 : ''}" ${isFirst ? 'readonly' : ''} min="1" max="20" step="0.5" placeholder="min" oninput="checkTotalTime()">
+        </div>
+        <div class="form-group">
+          <label>% VMA prévu</label>
+          <input type="number" id="pct-${i}" min="50" max="120" placeholder="ex: 85" oninput="updateDist(${i})">
+        </div>
+        <div class="form-group">
+          <label>Distance (m)</label>
+          <input type="number" id="dist-${i}" min="50" max="5000" step="50" placeholder="auto" oninput="">
+        </div>
+      </div>
+      ${i < n-1 ? `<div class="form-group" style="max-width:180px;">
+        <label>Repos après (min)</label>
+        <input type="number" id="repos-${i}" min="0" max="15" step="0.5" placeholder="min" oninput="checkTotalTime()">
+      </div>` : ''}
+    `;
+    container.appendChild(div);
+  }
+  // first course = 3 min always
+  const d0 = document.getElementById('dur-0');
+  if (d0) { d0.value = 3; }
+  checkTotalTime();
+}
+
+function updateDist(i) {
+  const vma = parseFloat(document.getElementById('vma').value) || 0;
+  const pct = parseFloat(document.getElementById(`pct-${i}`)?.value) || 0;
+  const dur = parseFloat(document.getElementById(`dur-${i}`)?.value) || 0;
+  if (vma && pct && dur) {
+    const speed = vma * pct / 100; // km/h
+    const dist = Math.round(speed * (dur/60) * 1000 / 50) * 50;
+    const distInput = document.getElementById(`dist-${i}`);
+    if (distInput && !distInput._userEdited) distInput.value = dist;
+  }
+}
+
+function checkTotalTime() {
+  const n = state.nbCourses;
+  let total = 0;
+  for (let i = 0; i < n; i++) {
+    total += parseFloat(document.getElementById(`dur-${i}`)?.value) || 0;
+    if (i < n - 1) total += parseFloat(document.getElementById(`repos-${i}`)?.value) || 0;
+  }
+  const alert = document.getElementById('alert-time');
+  if (total > 0 && total < 25) {
+    alert.classList.add('show');
+  } else {
+    alert.classList.remove('show');
+  }
+}
+
+// ===== START EVALUATION =====
+function startEvaluation() {
+  // Validate
+  state.prenom = document.getElementById('prenom').value.trim();
+  state.nom = document.getElementById('nom').value.trim();
+  state.classe = document.getElementById('classe').value;
+  state.vma = parseFloat(document.getElementById('vma').value) || 0;
+  state.obsPrenom = document.getElementById('obs-prenom').value.trim();
+  state.obsNom = document.getElementById('obs-nom').value.trim();
+
+  if (!state.prenom || !state.nom || !state.classe || !state.vma) {
+    alert('Merci de remplir tous les champs obligatoires (prénom, nom, classe, VMA).');
+    return;
+  }
+
+  // Build course objects
+  const n = state.nbCourses;
+  state.courses = [];
+  for (let i = 0; i < n; i++) {
+    const duree = parseFloat(document.getElementById(`dur-${i}`)?.value) || 0;
+    const pct   = parseFloat(document.getElementById(`pct-${i}`)?.value) || 0;
+    const dist  = parseFloat(document.getElementById(`dist-${i}`)?.value) || 0;
+    const repos = i < n-1 ? (parseFloat(document.getElementById(`repos-${i}`)?.value) || 0) : 0;
+    state.courses.push({
+      index: i,
+      duree: duree,
+      pct: pct,
+      distPrevue: dist,
+      repos: repos,
+      tours: 0,
+      distReelle: 0,
+      pctReel: 0,
+      timer: null,
+      restTimer: null,
+      timeRemaining: duree * 60,
+      restRemaining: repos * 60,
+      started: false,
+      finished: false,
+      restFinished: false,
+    });
+  }
+
+  document.getElementById('setup-phase').style.display = 'none';
+  document.getElementById('eval-phase').style.display = 'flex';
+
+  buildRunUI();
+  startGlobalTimer();
+}
+
+// ===== GLOBAL TIMER =====
+function startGlobalTimer() {
+  state.globalRemaining = 1800;
+  state.globalStarted = true;
+  updateGlobalDisplay();
+  state.globalTimer = setInterval(() => {
+    state.globalRemaining--;
+    updateGlobalDisplay();
+    if (state.globalRemaining <= 0) {
+      clearInterval(state.globalTimer);
+      finishEvaluation();
+    }
+    if (state.globalRemaining <= 120) {
+      document.getElementById('global-timer-display').classList.add('urgent');
+    }
+  }, 1000);
+}
+
+function updateGlobalDisplay() {
+  const m = Math.floor(state.globalRemaining / 60);
+  const s = state.globalRemaining % 60;
+  document.getElementById('global-timer-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ===== BUILD RUN UI =====
+function buildRunUI() {
+  const container = document.getElementById('course-run-list');
+  container.innerHTML = '';
+  state.courses.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'course-card';
+    div.id = `run-card-${i}`;
+    div.innerHTML = `
+      <div class="course-card-title">
+        Course ${i+1}
+        <span class="badge badge-gray" id="badge-${i}">En attente</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+        <div>
+          <div style="font-size:0.72rem;color:var(--light-blue);font-weight:600;text-transform:uppercase;">Durée</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;">${c.duree} min</div>
+        </div>
+        <div>
+          <div style="font-size:0.72rem;color:var(--light-blue);font-weight:600;text-transform:uppercase;">% VMA prévu</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;">${c.pct}%</div>
+        </div>
+        <div>
+          <div style="font-size:0.72rem;color:var(--light-blue);font-weight:600;text-transform:uppercase;">Dist. prévue</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;">${c.distPrevue} m</div>
+        </div>
+        <div>
+          <div style="font-size:0.72rem;color:var(--light-blue);font-weight:600;text-transform:uppercase;">Chrono</div>
+          <div class="timer-badge" id="timer-${i}">--:--</div>
+        </div>
+        ${c.repos > 0 ? `<div>
+          <div style="font-size:0.72rem;color:var(--red);font-weight:600;text-transform:uppercase;">Repos</div>
+          <div class="timer-badge rest-timer" id="rest-timer-${i}">--:--</div>
+        </div>` : ''}
+      </div>
+      <div class="course-controls">
+        <button class="btn btn-run btn-sm" id="btn-start-${i}" onclick="startCourse(${i})" ${i > 0 ? 'disabled' : ''}>▶ Démarrer</button>
+        <button class="btn btn-lap" id="btn-lap-${i}" onclick="addLap(${i})" disabled title="Ajouter un tour (+100m)">+1 tour</button>
+        <button class="btn btn-oups" id="btn-oups-${i}" onclick="removeLap(${i})" disabled>Oups</button>
+        <div class="lap-display">
+          <span>Tours :</span>
+          <strong id="laps-${i}">0</strong>
+        </div>
+      </div>
+      <div class="vma-result-inline" id="result-inline-${i}" style="display:none;"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ===== START COURSE =====
+function startCourse(i) {
+  const c = state.courses[i];
+  if (c.started || c.finished) return;
+  c.started = true;
+  state.currentCourse = i;
+
+  document.getElementById(`btn-start-${i}`).disabled = true;
+  document.getElementById(`btn-lap-${i}`).disabled = false;
+  document.getElementById(`btn-oups-${i}`).disabled = false;
+  document.getElementById(`badge-${i}`).textContent = '🏃 En cours';
+  document.getElementById(`badge-${i}`).className = 'badge badge-green';
+  document.getElementById(`run-card-${i}`).className = 'course-card active';
+
+  c.timeRemaining = c.duree * 60;
+  updateCourseTimer(i);
+
+  c.timer = setInterval(() => {
+    c.timeRemaining--;
+    updateCourseTimer(i);
+    if (c.timeRemaining <= 0) {
+      clearInterval(c.timer);
+      endCourse(i);
+    }
+  }, 1000);
+}
+
+function updateCourseTimer(i) {
+  const c = state.courses[i];
+  const m = Math.floor(c.timeRemaining / 60);
+  const s = c.timeRemaining % 60;
+  const el = document.getElementById(`timer-${i}`);
+  if (el) el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ===== ADD / REMOVE LAP =====
+function addLap(i) {
+  const c = state.courses[i];
+  if (c.finished) return;
+  c.tours++;
+  document.getElementById(`laps-${i}`).textContent = c.tours;
+}
+
+function removeLap(i) {
+  const c = state.courses[i];
+  if (c.finished) return;
+  if (c.tours > 0) c.tours--;
+  document.getElementById(`laps-${i}`).textContent = c.tours;
+}
+
+// ===== END COURSE =====
+function endCourse(i) {
+  const c = state.courses[i];
+  c.finished = true;
+
+  // lock tour buttons
+  document.getElementById(`btn-lap-${i}`).disabled = true;
+  document.getElementById(`btn-oups-${i}`).disabled = true;
+  document.getElementById(`badge-${i}`).textContent = '✅ Terminée';
+  document.getElementById(`badge-${i}`).className = 'badge badge-gray';
+
+  // calc distance & pct reel
+  c.distReelle = c.tours * 100;
+  if (c.duree > 0 && state.vma > 0) {
+    const speedReelle = (c.distReelle / 1000) / (c.duree / 60); // km/h
+    c.pctReel = Math.round((speedReelle / state.vma) * 100);
+  }
+
+  // show result inline
+  const res = document.getElementById(`result-inline-${i}`);
+  if (res) {
+    res.style.display = 'block';
+    res.innerHTML = `✅ Distance réelle : <strong>${c.distReelle} m</strong> | % VMA réel : <strong>${c.pctReel}%</strong>`;
+  }
+
+  // 3 bips
+  playBeeps(3);
+
+  // start rest timer if applicable
+  if (c.repos > 0 && i < state.courses.length - 1) {
+    startRest(i);
+  } else if (i < state.courses.length - 1) {
+    // No rest: unlock next
+    unlockNextCourse(i);
+  } else {
+    // last course done
+    document.getElementById(`run-card-${i}`).className = 'course-card done';
+  }
+}
+
+// ===== REST TIMER =====
+function startRest(i) {
+  const c = state.courses[i];
+  document.getElementById(`run-card-${i}`).className = 'course-card rest';
+  document.getElementById(`badge-${i}`).textContent = '⏸ Repos';
+  document.getElementById(`badge-${i}`).className = 'badge badge-red';
+
+  c.restRemaining = c.repos * 60;
+  updateRestTimer(i);
+
+  c.restTimer = setInterval(() => {
+    c.restRemaining--;
+    updateRestTimer(i);
+    if (c.restRemaining <= 0) {
+      clearInterval(c.restTimer);
+      c.restFinished = true;
+      document.getElementById(`run-card-${i}`).className = 'course-card done';
+      document.getElementById(`badge-${i}`).textContent = '✅ Repos terminé';
+      document.getElementById(`badge-${i}`).className = 'badge badge-gray';
+      unlockNextCourse(i);
+    }
+  }, 1000);
+}
+
+function updateRestTimer(i) {
+  const c = state.courses[i];
+  const m = Math.floor(c.restRemaining / 60);
+  const s = c.restRemaining % 60;
+  const el = document.getElementById(`rest-timer-${i}`);
+  if (el) el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function unlockNextCourse(i) {
+  const next = i + 1;
+  if (next < state.courses.length) {
+    const btn = document.getElementById(`btn-start-${next}`);
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ===== BEEPS =====
+function playBeeps(n) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    for (let k = 0; k < n; k++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(1, ctx.currentTime + k * 0.4);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + k * 0.4 + 0.3);
+      osc.start(ctx.currentTime + k * 0.4);
+      osc.stop(ctx.currentTime + k * 0.4 + 0.3);
+    }
+  } catch(e) { console.warn('Audio not available'); }
+}
+
+// ===== FINISH EVALUATION =====
+function finishEvaluation() {
+  if (state.globalTimer) clearInterval(state.globalTimer);
+  // Stop all running timers
+  state.courses.forEach(c => {
+    if (c.timer) clearInterval(c.timer);
+    if (c.restTimer) clearInterval(c.restTimer);
+    if (!c.finished) endCourse(c.index);
+  });
+
+  document.getElementById('eval-phase').style.display = 'none';
+  document.getElementById('results-section').style.display = 'flex';
+  buildResults();
+}
+
+// ===== BUILD RESULTS =====
+function buildResults() {
+  document.getElementById('results-identity').textContent = `${state.prenom} ${state.nom} — ${state.classe}`;
+  const cont = document.getElementById('results-content');
+  const noteDisp = document.getElementById('note-display');
+  cont.innerHTML = '';
+
+  const vma = state.vma;
+  let totalPctPrevu = 0, totalPctReel = 0, count = 0;
+
+  state.courses.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.innerHTML = `
+      <span class="result-label">Course ${i+1}</span>
+      <span class="result-value">${c.distReelle} m | ${c.pctReel}% VMA réel (prévu : ${c.pct}%)</span>
+    `;
+    cont.appendChild(row);
+    if (c.pct > 0) { totalPctPrevu += c.pct; count++; }
+    totalPctReel += c.pctReel;
+  });
+
+  const n = state.courses.length;
+  const moyPctPrevu = count > 0 ? (totalPctPrevu / count) : 0;
+  const moyPctReel  = n > 0 ? (totalPctReel / n) : 0;
+  const ecartMoy    = Math.abs(moyPctPrevu - moyPctReel);
+
+  const noteVMA   = getNoteVMA(moyPctReel);
+  const noteEcart = getNoteEcart(ecartMoy);
+  const noteTot   = noteVMA + noteEcart;
+
+  // Summary rows
+  const rows = [
+    [`% VMA moyen prévu`, `${moyPctPrevu.toFixed(1)}%`],
+    [`% VMA moyen réel`, `${moyPctReel.toFixed(1)}%`],
+    [`Écart moyen`, `${ecartMoy.toFixed(1)}%`],
+  ];
+  rows.forEach(([l,v]) => {
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.style.fontWeight = '600';
+    row.innerHTML = `<span class="result-label">${l}</span><span class="result-value">${v}</span>`;
+    cont.appendChild(row);
+  });
+
+  noteDisp.style.display = 'block';
+  noteDisp.innerHTML = `
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🏆 Note finale</div>
+    <div class="note-big">${noteTot.toFixed(1)} <span style="font-size:1.5rem;font-weight:600;">/10</span></div>
+    <div class="note-sub">Note VMA (${moyPctReel.toFixed(1)}%) : <strong>${noteVMA}/5</strong> &nbsp;|&nbsp; Note écart (${ecartMoy.toFixed(1)}%) : <strong>${noteEcart}/5</strong></div>
+  `;
+
+  // store for CSV
+  state._results = { moyPctPrevu, moyPctReel, ecartMoy, noteVMA, noteEcart, noteTot };
+}
+
+// ===== CSV EXPORT =====
+function saveCSV() {
+  const r = state._results || {};
+  const lines = [];
+  lines.push('Champ,Valeur');
+  lines.push(`Prénom,${state.prenom}`);
+  lines.push(`Nom,${state.nom}`);
+  lines.push(`Classe,${state.classe}`);
+  lines.push(`VMA (km/h),${state.vma}`);
+  lines.push(`Observateur,${state.obsPrenom} ${state.obsNom}`);
+  lines.push('');
+  lines.push('Course,Durée (min),% VMA prévu,Distance prévue (m),Tours,Distance réelle (m),% VMA réel');
+  state.courses.forEach((c,i) => {
+    lines.push(`Course ${i+1},${c.duree},${c.pct},${c.distPrevue},${c.tours},${c.distReelle},${c.pctReel}`);
+  });
+  lines.push('');
+  lines.push(`% VMA moyen prévu,${(r.moyPctPrevu||0).toFixed(1)}`);
+  lines.push(`% VMA moyen réel,${(r.moyPctReel||0).toFixed(1)}`);
+  lines.push(`Écart moyen (%),${(r.ecartMoy||0).toFixed(1)}`);
+  lines.push(`Note VMA (/5),${r.noteVMA||0}`);
+  lines.push(`Note écart (/5),${r.noteEcart||0}`);
+  lines.push(`Note totale (/10),${(r.noteTot||0).toFixed(1)}`);
+
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `EPS_${state.nom}_${state.prenom}_${state.classe}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== INIT =====
+generateCourseSetup();
+</script>
+</body>
+</html>
